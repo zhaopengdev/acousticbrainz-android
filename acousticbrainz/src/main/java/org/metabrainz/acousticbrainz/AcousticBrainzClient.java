@@ -15,4 +15,5 @@ public final class AcousticBrainzClient {
      * @return 0 or 1 depending on whether process completes successfully or not
      */
     public native static int extractData(String inputPath, String outputPath);
+    public native static int extractPitch(String inputPath, String outputPath);
 }

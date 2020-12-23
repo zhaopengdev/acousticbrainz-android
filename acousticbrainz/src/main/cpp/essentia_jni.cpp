@@ -17,3 +17,13 @@ Java_org_metabrainz_acousticbrainz_AcousticBrainzClient_extractData(JNIEnv *env,
     int returnCode = essentia_main(input, output, "");
     return returnCode;
 }
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_org_metabrainz_acousticbrainz_AcousticBrainzClient_extractPitch(JNIEnv *env, jclass,
+                                                                    jstring input_path, jstring output_path) {
+    std::string input = convertJStringToString(env, input_path);
+    std::string output = convertJStringToString(env, output_path);
+    int returnCode = essentia_pitch(input, output, "");
+    return returnCode;
+}

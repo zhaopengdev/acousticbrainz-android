@@ -60,3 +60,4 @@ void outputToFile(Pool& pool, const string& outputFilename, Pool& options) {
   output->compute();
   delete output;
 }
+
