@@ -20,8 +20,21 @@ void usage(char *progname) {
     exit(1);
 }
 
-int essentia_pitch(string audioFilename, string outputFilename, string profileName) {
+//linspace函数
+void linspace(Real begin, Real finish, int number,std::vector<Real>& array) {
+        Real interval = (finish - begin) / (number - 1);//
+//    Mat f(1, number, CV_64FC1);
+//    Real f[number];
+        for (int j = 0; j < number; j++) {
+//            f.at<double>(i,j)=begin+j*interval;
+            array.at(j) = begin+j*interval;
+            //cout << "("<<i+1<<","<<j+1<<")"<<f.at<double>(i, j) << endl;
+        }
+}
+
+int essentia_pitch(string audioFilename, string outputFilename, string profileName,int hopSize) {
     try{
+        Real sample = 44100;
         essentia::init();
         setDebugLevel(EAlgorithm);
         Pool options;
@@ -32,35 +45,62 @@ int essentia_pitch(string audioFilename, string outputFilename, string profileNa
 
         AlgorithmFactory& factory = standard::AlgorithmFactory::instance();
 
-        Algorithm* pitch = factory.create("PredominantPitchMelodia");
+        Algorithm* pitch = factory.create("PredominantPitchMelodia",
+                "hopSize",hopSize
+                );
+        pitch->configure("referenceFrequency",27.5);
+        pitch->configure("frameSize",8192);
+
 
         Pool results;
         Algorithm* audio = factory.create("MonoLoader",
                                           "filename", audioFilename,
-                                          "sampleRate", 44100);
+                                          "sampleRate", sample);
 
-//        Algorithm* fc    = factory.create("FrameCreator",
-//                                          "frameSize", 2048,
-//                                          "hopSize", 1024);
+        Algorithm* aBpm = factory.create("RhythmExtractor2013");
 
         std::vector<Real> audioBuffer;
+        Real bpm,confidence;
 
         std::vector<Real> pitchResult,pitchConfidenceResult;
+        std::vector<Real> ticks,estimates,bpmIntervals;
+
+
 
         audio->output("audio").set(audioBuffer);
 //        fc->input("signal").set(audioBuffer);
         pitch->input("signal").set(audioBuffer);
+        aBpm->input("signal").set(audioBuffer);
+
+        aBpm->output("bpm").set(bpm);
+        aBpm->output("ticks").set(ticks);
+        aBpm->output("estimates").set(estimates);
+        aBpm->output("bpmIntervals").set(bpmIntervals);
+        aBpm->output("confidence").set(confidence);
+
         pitch->output("pitch").set(pitchResult);
         pitch->output("pitchConfidence").set(pitchConfidenceResult);
 //        pitch->output("resultsFrames").set(resultsFrames);
 
         audio->compute();
+        aBpm->compute();
         pitch->compute();
 //
 ////        __android_log_write(ANDROID_LOG_ERROR, "pitch","pitchConfidence size:"+pitchConfidenceResult.size() );
 //
-        results.set("pitch",pitchResult);
-        results.set("pitchConfidence",pitchConfidenceResult);
+
+        Real audioDuration = audioBuffer.size() / sample;
+//        linspace(0,audioDuration,pitchResult.size(),pitchTimes);
+
+        results.set("pitches",pitchResult);
+        results.set("bpm",bpm);
+//        results.set("pitchConfidence",pitchConfidenceResult);
+//        results.set("pitchTimes",pitchTimes);
+//        results.set("pitchLength",pitchResult.size());
+        results.set("duration",audioDuration);
+
+//        __android_log_write(ANDROID_LOG_ERROR, "Essentia Android", "pitchResult length:"+pitchResult.size());
+//        __android_log_write(ANDROID_LOG_ERROR, "Essentia Android", "pitchConfidence length:"+pitchConfidenceResult.size());
 //
         outputToFile(results, outputFilename, options);
 //

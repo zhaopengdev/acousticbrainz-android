@@ -21,9 +21,9 @@ Java_org_metabrainz_acousticbrainz_AcousticBrainzClient_extractData(JNIEnv *env,
 extern "C"
 JNIEXPORT jint JNICALL
 Java_org_metabrainz_acousticbrainz_AcousticBrainzClient_extractPitch(JNIEnv *env, jclass,
-                                                                    jstring input_path, jstring output_path) {
+                                                                    jstring input_path, jstring output_path,jint hop_size) {
     std::string input = convertJStringToString(env, input_path);
     std::string output = convertJStringToString(env, output_path);
-    int returnCode = essentia_pitch(input, output, "");
+    int returnCode = essentia_pitch(input, output, "",hop_size);
     return returnCode;
 }
